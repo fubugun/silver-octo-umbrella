@@ -261,6 +261,9 @@ int main(){
 	遇到（ 压入栈时  需要看前一个字符
 	要用else if 而不是if  用于减少逻辑判断
 
+---
+__( 时， 压入真还是假   用if(i >= 1 && s[i-1] == '-') stk.push(!stk.top());就够了__
+
 ```c
 #include <iostream>
 #include <string>
@@ -340,6 +343,10 @@ int main(){
     cout << endl;
 }
 ```
+---
+---
+判断某个字符是不是在字符串中第一次出现：a.find(a[i]) == i 
+---
 ---
 ---
 ## 输入两个字符串，输出两个字符串的交集，对于重复的字符，只输出一次，并且按照升序输出交集中的字符。
@@ -507,6 +514,316 @@ int main(){
 }
 ```
 ---
+---
+## 中缀表达式求值 输入一个 中缀表达式（包含 + - * / ( ) 和整数）,计算表达式的值。
+
+	输入
+	3+(2*4)-5
+
+	输出
+	6
+---
+	思路： 用两个栈 一个存数字 一个存符号 先边扫描边计算
+---
+__遇到操作符时 需要先保证栈不为空 再进行弹出比它强的操作__
+也就是
+```c
+else if(fop(s[i])){
+	while(!op.empty() && fop(op.top()) >= fop(s[i])){
+```
+这里while里 需要先判断栈不为空
+
+---
+---
+遇到数字时  先把连续的几位数字转成一个数字时
+while里的条件要加上 __i < s.length()__
+而且也是 __先写这个条件__ 防止越界
+
+---
+---
+	① 如果是数字
+
+	读取完整整数 123
+	（注意读取完整数字的操作  和   i--）
+	然后压入 数字栈
+
+	② 如果是运算符 + - * /
+
+	如果 当前运算符优先级 <= 栈顶运算符  并且  栈顶不为空    就先计算。
+
+	然后再把运算符入栈。
+
+	③ 如果是 (
+	直接入栈。
+
+	④ 如果是 )
+	不断计算直到遇到 (。
+
+	⑤ 扫描结束
+	把栈里剩下的运算全部算完。
+```c
+#include <iostream>
+#include <string>
+#include <stack>
+using namespace std;
+
+int fnum(char c){
+    return c >= '0' && c <= '9';
+}
+
+int fop(char c){
+    if(c == '+' || c == '-') return 1;
+    if(c == '*' || c == '/') return 2;
+    return 0;
+}
+
+int calc(int a,int b,char op){//计算 a op b
+	//每种情况 分别计算 
+    if(op == '+') return a + b;
+    if(op == '-') return a - b;
+    if(op == '*') return a * b;
+    if(op == '/') return a / b;
+    return 0;
+}
+
+int main(){
+
+    string s;
+    cin >> s;
+
+    stack<int> nums;
+    stack<char> op;
+
+    for(int i = 0; i < s.length(); i++){
+
+        if(fnum(s[i])){
+            int num = 0;
+
+            while(i < s.length() && fnum(s[i])){//数字可能不是一位 所以要这么处理 ， 而且要让i不超过s的长度 
+                num = num * 10 + s[i] - '0';
+                i++;
+            }
+
+            nums.push(num);
+            i--;//上面的i++ 会使i多走一步  所以 这里需要i-- 
+        }
+
+        else if(s[i] == '('){// （ 直接压入 
+            op.push('(');
+        }
+
+        else if(s[i] == ')'){//) 栈顶(之前 一直计算 
+
+            while(op.top() != '('){
+                int b = nums.top(); nums.pop();
+                int a = nums.top(); nums.pop();
+                char c = op.top(); op.pop();//注意是 a op b; b是栈顶元素 a是前面一个的元素 
+
+                nums.push(calc(a,b,c));
+            }
+
+            op.pop();//弹出( 
+        }
+
+        else{
+
+            while(!op.empty() && fop(s[i]) <= fop(op.top())){//操作符 遇到比它优先级小的之前一直计算 并且需要保证栈不为空 
+                int b = nums.top(); nums.pop();
+                int a = nums.top(); nums.pop();
+                char c = op.top(); op.pop();
+
+                nums.push(calc(a,b,c));
+            }
+
+            op.push(s[i]);//压入操作符 
+        }
+    }
+
+    while(!op.empty()){//处理剩余操作符; 这里不是压入 操作符  所以不需要 保证栈顶操作符的优先级比它小  
+        int b = nums.top(); nums.pop();
+        int a = nums.top(); nums.pop();
+        char c = op.top(); op.pop();
+
+        nums.push(calc(a,b,c));
+    }
+
+    cout << nums.top() << endl;
+}
+```
+---
+---
+## 后缀表达式求值
+
+__如果是数字 压入数字栈
+如果是操作符 从数字栈弹出两个数字 计算 然后压入栈中
+最后输出数字栈的栈顶__
+
+```c
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stack>
+using namespace std;
+
+int fnum(char s){
+
+		if(s >= '0' && s <= '9') return 1; 
+	
+		else return 0;
+}
+
+
+int fop(char s){
+	
+	if(s == '+' || s == '-' || s == '*' || s == '/') return 1;
+	else return 0;
+	
+}
+
+int fcal(int a, int b, char s){
+	
+	if(s == '+') return a+b;
+	if(s == '-') return a-b;
+	if(s == '*') return a*b;
+	if(s == '/') return a/b;
+	return 0;
+	
+}
+
+int main(){
+	
+	stack<int> num;
+	string s;
+	getline(cin, s);
+	
+	
+	for(int i = 0; i < s.length(); i++){
+		if(fnum(s[i])){
+			int temp = 0;
+			while(i != s.length() && fnum(s[i])){
+				temp = temp*10 + s[i]-'0';
+				i++;
+			}
+			i--;
+			num.push(temp);	
+		}
+		else if(fop(s[i])){
+			int b = num.top(); num.pop();
+			int a = num.top(); num.pop();
+			int res = fcal(a, b, s[i]);
+			num.push(res);
+		}
+	}
+	
+	cout << num.top();
+}
+```
+---
+---
+## 判断括号序列是否合法,输入只包含 ()[]{} 的字符串，判断括号是否匹配。
+
+
+
+	输入
+	{[()]}
+
+	输出
+	YES
+
+	输入
+	{[(])}
+
+	输出
+	NO
+---
+	从左到右扫描字符串：
+
+	1️⃣ 如果是 左括号 → 入栈
+	2️⃣ 如果是 右括号 →
+
+	栈为空 → 不合法
+
+	栈顶不是对应左括号 → 不合法
+
+	否则 → 弹栈
+
+	最后：
+	栈为空 → 合法
+
+	栈不为空 → 不合法
+```c
+#include <iostream>
+#include <string>
+#include <stack>
+using namespace std;
+
+int left(char c){
+	if(c == '(' || c == '[' || c == '{') return 1;
+	else return 0;
+}
+
+int right(char c){
+	if(c == ')' || c == ']' || c == '}') return 1;
+	else return 0;
+}
+
+int fmatch(char a, char b){
+	if(a == '(' && b == ')') return 1;
+	else if(a == '[' && b == ']') return 1;
+	else if(a == '{' && b == '}') return 1;
+	else return 0;
+}
+
+int main(){
+	
+	string s;
+	getline(cin, s);
+	stack<char> stk;
+	int flag = 1;
+	
+	for(int i = 0; i < s.length(); i++){
+		if(left(s[i])) stk.push(s[i]);
+		else if(right(s[i])){
+			if(stk.empty() || !fmatch(stk.top(), s[i])){
+				flag = 0;
+				break;
+			} 
+			else stk.pop();
+		}
+	}
+	
+	
+	if(!stk.empty()) flag = 0;//最后栈不空 也不对 
+	
+	if(flag == 0){
+		cout << "NO" << endl;
+	}
+	else{
+		cout << "YES" << endl;
+	}
+}
+```
+---
+---
+## 表达式最大括号深度,输入一个表达式，输出表达式中 括号嵌套的最大深度。
+
+
+	输入
+	((a+b)*(c+d))
+
+	输出
+---
+	遇到 '('  深度 +1
+	遇到 ')'  深度 -1
+	记录过程中出现过的最大深度
+
+
+	维护两个变量：
+	cur   当前深度
+	maxd  最大深度
+
+---
+
 ---
 ## 输入字符串 s，整数 n，输出长度为 n 的 s 的没有重复字符的顺序子串。
 例：输入：abccdef 2
@@ -748,6 +1065,8 @@ int main() {
 ---
 ---
 ## 输入一个字符串，以回车结束，将其按单词反序输出，例如输入 I am a student，输出 student a am I
+__str.erase(pos);        // 删除pos位置开始到末尾__
+__括号里是位置__
 ```c
 先读入一整行字符串  判断最后一个字符是否是标点
 再把字符串输入stringstream 让它分隔字符
@@ -1152,6 +1471,16 @@ int main(){
 ```
 ---
 ---
+### 全排列要求按字典序输出
+
+法一：set
+法二：
+一开始 __先排序字符串__：sort(str.begin(), str.end());
+那么递归生成的排列 __天然就是字典序。__
+这样就可以直接输出，不需要 set。
+
+---
+---
 ## 递归计算 -1/4 + 1/8 - 1/12 + 1/20
 结束条件是当n等于1    
 此时返回 1/4
@@ -1460,6 +1789,537 @@ int main(){
 	
 	//从str的第0位开始运算 
 	ziji(current,0,str);
+}
+```
+---
+---
+### 如果要求输出非空子集
+
+那么 递归结束的终止条件要加!res.empty()
+而且 __不能写成 && 的形式__  因为这样 ———__空集的话就不会返回__
+
+所以要写成：
+```c
+void f(string res, int n){
+
+	if(n == end){
+		if(!res.empty())
+			cout << res << endl;
+		return;
+	}
+
+	f(res + str[n], n+1);
+	f(res, n+1);
+}
+```
+
+ __这样就保证了 只要长度够了 就都return__
+
+---
+---
+## 输入字符串 s 和整数 k，使用递归输出字符串中所有 长度为 k 的组合。
+
+	输入
+	abcd
+	2
+
+	输出
+	ab
+	ac
+	ad
+	bc
+	bd
+	cd
+---
+
+就是子集的思想 每个元素都是 选 还是 不选
+但是终止条件有变化  __如果 i== 长度了  就得返回 不能越界__
+
+---
+```c
+#include <iostream>
+#include <string>
+using namespace std;
+
+string s;
+int k;
+
+void f(int i, string res){
+	
+	if(res.length() == k){
+		cout << res <<endl;
+		return;
+	}
+	
+	if(i == s.length()){//终止条件写在这里  不能越界  如果i == 长度了 就返回 
+		return;
+	}
+	
+	
+	//子集的思想 选还是不选 
+	f(i+1, res+s[i]);
+	
+	f(i+1, res);
+	
+}
+
+int main(){
+	
+	getline(cin, s);
+	
+	cin >> k;
+	 
+	string res = "";
+	f(0, res);
+	
+}
+```
+---
+---
+## 给定一个数组 a 和一个整数 target，输出 所有和等于 target 的组合。每个数字 只能使用一次。
+
+	数组 = 1 2 3 4 5
+	target = 5
+	输出
+	1 4
+	2 3
+	5 
+---
+
+思想和 上面两道题  求子集， 递归输出长度为k的字符串 一样   __都是遍历每个元素 看他是否参与__
+
+这道题 多了一个 __剪枝操作__ 如果当前和已经 __超过target__ ,__返回就行__ 不要再往下递归了
+
+---
+#### vector / 数组递归 → 用&    		且需要pop_back
+#### 字符串拼接 → 不用 &
+
+---
+```c
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int target;
+vector<int> vec;
+
+int fsum(vector<int> temp){//计算temp元素和 
+	
+	int sum = 0;
+	
+	for(int i = 0; i < temp.size(); i++){
+		sum += temp[i];
+	}
+	
+	return sum;
+}
+
+void fprint(vector<int> temp){//打印 
+	
+	for(int i = 0; i < temp.size(); i++){
+		cout << temp[i] << " ";
+	}
+	cout << endl;
+}
+
+void f(int i, vector<int> &temp){//递归函数   &temp
+	
+	int sum = fsum(temp);
+
+	if(sum == target){//终止条件 
+		fprint(temp);
+		return;
+	}
+
+	if(sum > target) return;   // 剪枝  比如已经放了 1 7 目标是5 那后面的元素就不需要了 
+	
+	if(i == vec.size()){//i不能超出限制  超出则返回 
+		return;
+	}
+	
+	temp.push_back(vec[i]);//temp压入当前元素   也就是当前元素选择参与 
+	f(i+1, temp);
+	
+	temp.pop_back();//弹出当前元素    当前元素选择不参与
+	f(i+1, temp);
+	
+}
+
+int main(){
+	
+	cin >> target;
+	
+	int x;
+	
+	while(cin >> x){
+		vec.push_back(x);
+		if(cin.peek() == '\n') break;
+	}
+	
+	vector<int> temp;
+	f(0, temp);
+	
+}
+```
+---
+---
+## 输入整数 n，使用递归生成 所有长度为 n 的二进制字符串。
+
+	输入
+	3
+
+	
+
+	000
+	001
+	010
+	011
+	100
+	101
+	110
+	111
+---
+第二次添加完数字 也要 __pop_back__
+
+---
+```c
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int n;
+
+void fprint(vector<int> res){
+	
+	for(int i = 0; i < res.size(); i++){
+		cout << res[i];
+	}
+	
+	cout << endl;
+	
+}
+
+void f(int i, vector<int>& res){
+	
+	if(i == n){
+		fprint(res);
+		return;
+	}
+	
+	
+	res.push_back(1);
+	f(i+1, res);
+	
+	res.pop_back();
+	
+	res.push_back(0);
+	f(i+1, res);
+	
+	res.pop_back();//这里也要pop_back  恢复现场 
+	
+}
+
+int main(){
+
+	cin >> n;
+	
+	vector<int> res;
+	
+	f(0, res);
+	
+}
+```
+---
+---
+## 输入一个字符串 s，字符串中可能存在重复字符。
+要求使用 递归方法 输出该字符串所有 不重复的排列，按字典序输出。
+
+	测试用例
+
+	输入 aab
+
+	输出
+	aab
+	aba
+	baa
+---
+	思路：全排列 + 用set去重 
+```c
+#include <iostream>
+#include <string>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+set<string> s;
+
+
+
+void f(string& str, int begin, int end){
+	
+	if(begin == end){
+		s.insert(str);
+		return;
+	}
+	
+	for(int i = begin; i <= end; i++){
+		swap(str[i], str[begin]);
+		f(str, begin+1, end);
+		swap(str[i], str[begin]);
+	}
+	
+}
+
+int main(){
+	
+	string str;
+	cin >> str;
+	
+	f(str, 0, str.length()-1);
+	
+	for(set<string>::iterator it = s.begin(); it != s.end(); it++){
+		cout << *it << endl;
+	} 
+	
+}
+```
+---
+---
+## 给定字符集合 {a,b,c,d}，输入整数 n，使用递归生成 所有长度为 n 的字符串，但要求 不能出现相邻相同字符。
+
+
+	输入 2
+
+	输出
+
+	ab
+	ac
+	ad
+	ba
+	bc
+	bd
+	ca
+	cb
+	cd
+	da
+	db
+	dc
+---
+	思路： 全排列+剪枝操作
+	每次递归前先判断添加的字母和结果末尾的字母是不是一样  不一样就能递归 否则跳过这次递归
+
+```c
+#include <iostream>
+#include <string>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+
+int n;
+
+void f(int x, string& res){
+	
+	if(x == n){
+		cout << res << endl;
+		return;
+	}
+	
+	//剪枝操作： 在递归执行之前就先判断 如果准备添加的字母和前面的字母一样 就不进行递归 continue
+	for(int i = 0; i < 4; i++){
+		
+		char c = 'a'+ i;//往后需要添加的字母 
+		
+		if(res.length() >= 1 && res[res.length()-1] == c){//如果需要添加的字母和result最后字母一样 
+			//这里要注意 result的长度要 >=1 才判断 
+			continue;//不执行递归 跳过 
+		} 
+		else{
+			//不一样 可以进行递归 
+			res += c;//添加字母 
+			f(x+1, res);//递归 
+			res.erase(res.length()-1);//删除添加的字母 准备下一次for循环 
+		}
+	}
+	
+}
+
+int main(){
+
+	cin >> n;
+	string res = "";
+	
+	f(0, res);
+	
+}
+
+
+
+```
+---
+---
+## 输入整数 n，递归输出所有 n 对合法括号组合。
+
+
+	输入
+	2
+
+	输出
+	(())
+	()()
+
+---
+	合法括号必须满足两个条件：
+	1️⃣ 左括号数量 ≤ n
+	2️⃣ 右括号数量 ≤ 左括号数量
+
+	否则就会出现：
+	)(   ❌
+	(())) ❌
+	递归状态
+
+	递归函数需要记录：
+	当前字符串
+	左括号用了多少
+	右括号用了多少
+
+	比如：
+	dfs(str, left, right)
+
+
+	递归规则
+	情况1：还能放左括号
+
+	如果 left < n
+
+	可以加：
+	dfs(str + "(", left + 1, right)
+
+	情况2：可以放右括号
+	如果
+	right < left
+
+	可以加：
+	dfs(str + ")", left, right + 1)
+	结束条件
+
+	当 str.length() == 2*n
+	说明一个合法序列生成。
+	输出即可。
+---
+	为什么 res + "(" 不会污染，而 res += "(" 会污染？
+
+	🌟 一句话核心区别
+	res += "("   → 修改原变量（会污染）
+	res + "("    → 生成新字符串（不影响原变量）
+
+	🎯 你可以这样理解（最直观）
+	res += "("   相当于：在原纸上改
+	res + "("    相当于：复印一份再改
+```c
+#include <iostream>
+#include <string>
+using namespace std;
+
+int n;
+
+int fleft(string s){
+	int sum = 0;
+	
+	for(int i = 0; i < s.length(); i++){
+		if(s[i] == '(' ) sum++;
+	}
+	
+	return sum;
+}
+
+int fright(string s){
+	int sum = 0;
+	
+	for(int i = 0; i < s.length(); i++){
+		if(s[i] == ')' ) sum++;
+	}
+	
+	return sum;
+}
+
+void f(string res){
+	
+	if(res.length() == 2*n){
+		cout << res << endl;
+		return; 
+	}
+	
+	if(fleft(res) < n){//是小于  不是小于等于 
+		f(res+"(");// 传进去res+(  相当于复制了一份再进去 不会污染原来的res 也就不用递归结束之后 再popback 
+	}
+	
+	if(fright(res) < fleft(res)){
+		f(res+")");
+	}
+	
+	
+}
+
+int main(){
+	
+	cin >> n;
+	string res = "";
+	
+	f(res);
+	
+}
+
+```
+---
+---
+## 输入一个字符串 s，用递归方法输出其 所有非空子序列。
+
+	输入 abc
+
+	输出
+
+	a
+	b
+	c
+	ab
+	ac
+	bc
+	abc
+---
+	思路： 全排列
+
+__注意：非空才输出__
+__如果要求按照长度/字典序排序 用set就可以了__
+```c
+#include <iostream>
+#include <string>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+string res = "";
+string s;
+
+void f(string& res, int n){
+	if(n == s.length() && !res.empty()){
+		cout << res << endl;
+		return;
+	}
+	
+	res += s[n];
+	f(res, n+1);
+	res.erase(res.length()-1);
+	f(res, n+1);
+	
+}
+
+int main(){
+	
+	cin >> s;
+	
+	f(res, 0);
 }
 ```
 ---
@@ -1880,6 +2740,78 @@ int main(){
 ```
 ---
 ---
+## 输入两个大整数 a 和 b（保证 a ≥ b），输出 a - b。
+
+
+
+	输入
+	10000000000000000000
+	1
+
+	输出
+	9999999999999999999
+---
+
+用 __borrow__ 表示借位
+每次计算结果为 num = x-y-borrow
+如果 num < 0 num就要+10 并且borrow = 1
+如果num >= 0 borrow=0
+
+计算完之后 __去掉前面多余的 0__
+
+
+```c
+#include <iostream>
+#include <string>
+#include <stack>
+using namespace std;
+
+int main(){
+	
+	string a, b;
+	cin >> a >> b;
+	
+	int i = a.length()-1;
+	int j = b.length()-1;
+	
+	int borrow = 0;
+	string res = ""; 
+	
+	while(i >= 0 || j >= 0){//这里和加法不一样 
+		int x = i >= 0 ? a[i]-'0' : 0;
+		int y = j >= 0 ? b[j]-'0' : 0;
+		
+		int num = x-y-borrow;
+		
+		if(num < 0){//比如 1-9  结果是-8 但是加上 10 就成了 2  就是 11 - 9的结果 
+			num = num + 10;
+			borrow = 1;
+		}
+		else{
+			borrow = 0;
+		}
+		
+		char c = num + '0';
+		res = c + res;
+		
+		i--;
+		j--;
+	}
+	
+	//去掉前置0
+	string s = "";
+	for(int i = 0; i < res.length(); i++){
+		if(res[i] != '0'){
+			s = res.substr(i, res.length()-i);
+			break;
+		}
+	} 
+	
+	cout << s << endl;
+}
+```
+---
+---
 ## 将十进制数转换成七进制数
 ```c
 #include <iostream>
@@ -2190,6 +3122,226 @@ int main(){
 ```
 ---
 ---
+## 16 Z字形打印矩阵
+输入 n × m 矩阵，按 **__Z字形（对角线交替方向）__**打印矩阵元素。
+
+
+	输入
+	3 3
+	1 2 3
+	4 5 6
+	7 8 9
+
+	输出
+	1 2 4 7 5 3 6 8 9
+---
+
+__对角线数 = n + m - 1__
+编号 = i + j
+奇偶控制方向
+
+__对角线的起点：__
+```c
+   if(k%2==0){
+            int i=min(k,n-1);
+        }
+    else{
+            int j=min(k,m-1);
+
+```
+---
+```c
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main(){
+	
+	int n, m;
+	int a[500][500];
+	cin >> n >> m;
+	
+	for(int i = 0; i < n; i++){
+		for(int j = 0; j < m; j++){
+			cin >> a[i][j];	
+		}
+	}
+	
+	int max = n+m-1;//对角线个数是n+m-1 
+	
+	for(int k = 0; k < max; k++){
+		if(k%2 == 0){//偶数从下往上打印  
+			int i = min(k, n-1);//先找最大行号   最大行号是min(k,n-1) 
+			int j = k - i;
+			
+			while(i >= 0 && j <= m-1){//限制 
+				cout << a[i][j] << " ";
+				i--;
+				j++;
+			}
+		}
+		else{
+			int j = min(k, m-1);//找最大列号 最大列号是 min(k,m-1) 
+			int i = k - j;
+			
+			while(j >= 0 && i <= n-1){
+				cout << a[i][j] << " ";
+				j--;
+				i++;
+			}
+		}
+	}
+	
+}
+```
+
+---
+---
+## 15 矩阵旋转90° 输入 n × n 矩阵，将矩阵 顺时针旋转 90°。
+
+	输入
+	3
+	1 2 3
+	4 5 6
+	7 8 9
+
+	输出
+	7 4 1
+	8 5 2
+	9 6 3
+---
+法一：__新矩阵[i][j] = 原矩阵[n-1-j][i]__
+新开一个数组
+
+---
+法二：
+顺时针90°：
+__转置 + 每行反转__
+
+逆时针90°：
+__转置 + 每列反转__
+
+---
+__转置__
+```c
+    for(int i = 0; i < n; i++){
+        for(int j = i+1; j < n; j++){
+            swap(a[i][j], a[j][i]);
+        }
+    }
+```
+翻转对角线以上的就行了 __所以j从i+1开始__
+
+---
+__每行反转__
+```c
+
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < n/2; j++){
+            swap(a[i][j], a[i][n-1-j]);
+        }
+    }
+```
+交换每行的第j个 和 第 __n-1-j__ 个元素
+
+---
+```c
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main(){
+	
+	int n;
+	cin >> n;
+	int a[500][500];
+	
+	for(int i = 0; i <n; i++){
+		for(int j = 0; j < n; j++){
+			cin >> a[i][j]; 
+		}
+	}
+	
+	//转置
+	for(int i = 0; i < n; i++){
+		for(int j = i+1; j < n; j++){
+			swap(a[i][j], a[j][i]);
+		}
+	} 
+	
+	//翻转每行
+	for(int i = 0; i < n; i++){
+		for(int j = 0; j < n/2; j++){
+			swap(a[i][j], a[i][n-1-j]);
+		}
+	}
+	
+	for(int i = 0; i <n; i++){
+		for(int j = 0; j < n; j++){
+			cout << a[i][j] << "\t"; 
+		}
+		cout << endl;
+	} 
+}
+```
+---
+---
+## 矩阵转置：输入 n × m 矩阵，输出其 转置矩阵。
+
+
+
+	输入
+	2 3
+	1 2 3
+	4 5 6
+
+	输出
+	1 4
+	2 5
+	3 6
+---
+
+	矩阵转置就是：
+	A[i][j]  ->  B[j][i]
+---
+	创建n行m列数组的写法 vector<vector<int> > a(n, vector<int> (m)) 
+---
+```c
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int main(){
+	
+	int n, m;
+	cin >> n >> m;
+	
+	vector<vector<int> > a(n, vector<int>(m));//创建n行m列数组的写法 vector<vector<int> > a(n, vector<int> (m)) 
+	vector<vector<int> > b(m, vector<int>(n));
+	
+	for(int i = 0; i < n; i++){
+		for(int j = 0; j < m; j++){
+			cin >> a[i][j];
+		}
+	} 
+	
+	for(int i = 0; i < n; i++){
+		for(int j = 0; j < m; j++){
+			b[j][i] = a[i][j];
+		}
+	} 
+	
+	for(int i = 0; i < m; i++){
+		for(int j = 0; j < n; j++){
+			cout << b[i][j] << "\t";
+		}
+		cout << endl;
+	} 
+	
+}
+```
+---
 ## 本题要求编写程序，将给定 n×n 方阵中的每个元素循环向右移 m 个位置，即将第 0、1、…、n-1 列变换为第 n−m、n−m+1、…、n−1、0、1、…、n−m−1 列
 	reverse函数就行
 	每一行先整个翻转 再翻转前m个 再翻转后n-m个
@@ -2230,6 +3382,41 @@ int main(){
 }
 ```
 ---
+---
+## 在 n×m 的网格中，从 (0,0) 只能向 右或向下 走，求到 (n-1,m-1) 的路径数。
+
+
+	输入
+	3 3
+
+	输出
+	6
+__递归的结束 除了行列满足 还有行列超过限制时__
+```c
+
+#include <iostream>
+using namespace std;
+
+int m;
+int n;
+
+int f(int x, int y, int hang, int lie){
+	if(x == hang && lie == y) return 1;
+	else if(x > hang || y > lie) return 0;//必须加这一句 x y不能超过 hang lie 如果超过 说明没有答案 要返回  否则低估就会一直进行 没有出口 
+	else{
+		return f(x+1, y , hang, lie) + f(x, y+1, hang, lie);
+	}
+}
+
+int main(){
+
+	cin >> m >> n;
+	int num = f(0, 0, m-1, n-1); 
+	cout << num <<endl;
+}
+```
+---
+
 ---
 # 链表
 ---
@@ -2699,6 +3886,14 @@ int main(){
 ## 输入若干个整数，构造两条升序链表，一条存放奇数一条存放偶数，输出两条链表后将它们合并成第三条也为升序的链表。输出这第三条链表
 
 下面的代码构建第三条链采用双指针的思路
+
+---
+这里需要注意的是 双指针处理的函数里
+__while 的条件是&&__
+并且 最后插入剩余元素时  __要先用if 再用while__
+
+---
+
 ```c
 /*输入若干个整数，构造两条升序链表，一条存放奇数一条存放偶数，
 输出两条链表后将它们合并成第三条也为升序的链表。输出这第三条链表*/
@@ -3171,6 +4366,130 @@ Node* detectCycle(Node* head){
     }
 
     return NULL; // 无环
+}
+```
+---
+---
+## 翻转链表每 k 个节点
+输入一组整数构造链表，再输入整数 k，
+将链表 每 k 个节点进行翻转
+
+	输入
+	1 2 3 4 5 6
+	2
+
+	输出
+	2 1 4 3 6 5
+---
+	思路：
+	翻转：头插法
+	每k个翻转完：1.上一段的末尾要连接这一段 
+	如果是第一次翻转 则是更新head
+	2.这一段要连接下一段的头
+	3.更新指向已经翻转完的尾部 
+
+---
+```c
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <sstream>
+using namespace std;
+
+struct Node{
+	int data;
+	Node* next;
+};
+
+void insert(Node*& head, int x){
+	Node* newnode = new Node();
+	newnode->data = x;
+	newnode->next = NULL;
+	
+	if(head == NULL){
+		head = newnode;
+		return;
+	}
+	
+	Node* p = head;
+	
+	while(p->next != NULL){
+		p = p->next;
+	}
+	
+	p->next = newnode;
+}
+
+void fprint(Node* head){
+	while(head != NULL){
+		cout << head->data << " ";
+		head = head->next;
+	}
+}
+
+Node* reverse(Node*& head){//头插法翻转链表 
+	Node* newhead = new Node();
+	newhead->data = 0;
+	newhead->next = NULL;
+	
+	Node* p = head;
+	Node* q = head;
+	
+	while(p != NULL){ //p=q 放在循环末尾 结束条件就是p!=NULL 放在开始就是q！= NULL 
+		
+		q = p->next;
+		p->next = newhead->next;
+		newhead->next = p;
+		p = q;
+		
+	}
+	
+	return newhead->next;
+} 
+
+int main(){
+	
+	Node* h = NULL;
+	int x;
+	
+	while(cin >> x){
+		insert(h, x);
+		if(cin.peek() == '\n') break;
+	}
+	
+	int k;
+	cin >> k;
+	
+	Node* p = h;
+	Node* q = h;
+	Node* hh = h;
+	Node* prev = NULL;   // prev表示上一段翻转了的链表的最后一个节点 用来连接刚刚翻转了的链表的开头 
+	
+	while(q != NULL){
+		p = q;//q表示没翻转的剩余链表的开头 
+		hh = p;//hh代表截取的链表的开头 
+		
+		for(int i = 1; i < k && p != NULL; i++){  
+			p = p->next;//
+		}
+		
+		if(p == NULL) break;  //p走到要截取的末尾 
+		
+		q = p->next;
+		p->next = NULL;//截取 
+		
+		Node* newhead = reverse(hh);//翻转之后的第一个节点 
+		
+		if(prev == NULL) h = newhead;   // 第一次翻转 需要让h指向翻转后的第一个节点 
+		else prev->next = newhead;//每次翻转完 让上一段的末尾指向现在这一段的开头 
+		
+		prev = hh;  // 翻转后hh变成尾 同时也变成prev 用于连接下一段 
+		
+		hh->next = q;//和剩下的一段连接 
+	}
+	
+	fprint(h);
 }
 ```
 ---
