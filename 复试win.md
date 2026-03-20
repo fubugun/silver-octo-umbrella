@@ -33,7 +33,7 @@
 for(i = 1; i <= n) 
 ```
 
-这样 **最后一个平台会自动处理**，无需额外代码。
+这样 **最后一个平台会自动处理**，无需额外代码 。
 
 ---
 
@@ -1067,11 +1067,11 @@ int main() {
 ## 输入一个字符串，以回车结束，将其按单词反序输出，例如输入 I am a student，输出 student a am I
 __str.erase(pos);        // 删除pos位置开始到末尾__
 __括号里是位置__
-```c
-先读入一整行字符串  判断最后一个字符是否是标点
-再把字符串输入stringstream 让它分隔字符
-然后用栈输出  输出一个单词判断栈是否为空  空的话就是最后一个单词 若有标点 输出标点  否则输出单词+空格
 
+	先读入一整行字符串  判断最后一个字符是否是标点
+	再把字符串输入stringstream 让它分隔字符
+	然后用栈输出  输出一个单词判断栈是否为空  空的话就是最后一个单词 若有标点 输出标点  否则输出单词+空格
+```c
 stringstream：
 #include<sstream>
 
@@ -1300,6 +1300,57 @@ int main(){
 	
 }
 ```
+---
+---
+##　输入一个代表文件系统路径的字符串（仅包含 /、.、.. 和英文字母），请将其简化。
+
+. 表示当前目录。
+
+.. 表示返回上一级目录。
+
+多个连续的 / 视为一个。
+输出简化后的绝对路径。
+
+	测试用例：
+
+	输入：/home//foo/
+
+	输出：/home/foo
+
+	输入：/a/./b/../../c/
+
+	输出：/c
+```c
+简化文件路径（模拟栈的“进”与“出”）
+想象你在电脑文件夹里点来点去：
+
+.. 相当于点浏览器左上角的 “返回上一级”。
+
+. 相当于 “刷新当前页”，位置没变。
+
+// 这种连续斜杠就像你手抖多打了一个斜杠，电脑会自动忽略。
+
+为什么用栈？ 因为我们需要记住“来时的路”。当你遇到 .. 时，你需要知道“上一级”是谁。栈（Stack）正好符合这个特性：最后进去的目录，最先被“退出来”。
+
+图解逻辑：
+
+以 /a/./b/../../c/ 为例：
+
+遇到 a：进栈。 栈内：["a"]
+
+遇到 .：无视。 栈内：["a"]
+
+遇到 b：进栈。 栈内：["a", "b"]
+
+遇到 ..：退栈（回退）。 栈内：["a"]
+
+遇到 ..：退栈（回退）。 栈内：[]（变空了，回到根目录）
+
+遇到 c：进栈。 栈内：["c"]
+
+结果：/c
+```
+
 ---
 ---
 # 递归
@@ -1980,7 +2031,12 @@ int main(){
 	110
 	111
 ---
+
 第二次添加完数字 也要 __pop_back__
+
+---
+或者使用 stirng 
+**每次递归选择 res+1 还是 +0**
 
 ---
 ```c
@@ -2436,7 +2492,62 @@ int main(){
 }
 ```
 ---
+---
+## 岛屿 DFS
+	1 1 0 0 0
+	1 1 0 0 1
+	0 0 1 0 1
+	0 0 0 1 1
 
+	1 表示陆地，0 表示水
+
+	问：有多少个岛屿？
+---
+	🚀 核心思想
+	每找到一个 1，就用 DFS 把整块岛淹掉
+
+	🔥 DFS 思路
+	遍历整个地图
+	遇到 1：
+	岛屿数 +1
+	DFS 把这一片全部变成 0
+```c
+void dfs(vector<vector<int>>& grid, int i, int j) {
+    int m = grid.size();
+    int n = grid[0].size();
+
+    // 越界 or 水
+    if (i < 0 || i >= m || j < 0 || j >= n || grid[i][j] == 0)
+        return;
+
+    // 淹掉
+    grid[i][j] = 0;
+
+    // 四个方向
+    dfs(grid, i + 1, j);
+    dfs(grid, i - 1, j);
+    dfs(grid, i, j + 1);
+    dfs(grid, i, j - 1);
+}
+
+
+int numIslands(vector<vector<int>>& grid) {
+    int count = 0;
+    int m = grid.size();
+    int n = grid[0].size();
+
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            if (grid[i][j] == 1) {
+                count++;
+                dfs(grid, i, j);
+            }
+        }
+    }
+    return count;
+}
+```
+---
 ---
 
 # 数学
@@ -3122,7 +3233,7 @@ int main(){
 ```
 ---
 ---
-## 16 Z字形打印矩阵
+## Z字形打印矩阵
 输入 n × m 矩阵，按 **__Z字形（对角线交替方向）__**打印矩阵元素。
 
 
@@ -4550,4 +4661,326 @@ int main(){
 }
 ```
 ---
+# 滑动窗口类
+---
+## 编写程序，输入一个字符串，找出其中不包含重复字符的最长连续子串。输出该子串的长度及其内容。若有多个长度相同的，输出第一个。
 
+
+
+	输入： abcabcbb
+
+	输出： 3, abc
+
+	输入： bbbbb
+
+	输出： 1, b
+
+	输入： pwwkew
+
+	输出： 3, wke
+```c
+#include <iostream>
+#include <string>
+using namespace std;
+
+
+int main(){
+	
+	string s;
+	getline(cin, s);
+	
+	string res = "";
+	
+	int count[256] = {0};//标记每个字符出现的次数 
+	int left = 0;
+	int maxlength = 0;//记录最长的窗口长度 
+	int ll = 0;//记录最长窗口的起始位置 
+	
+	for(int right = 0; right < s.length(); right++){
+		count[s[right]]++;
+		
+		//如果加入右边字符 导致窗口内的字符出现的次数不是1了  就缩小窗口  让left向右 用while循环  直到满足条件：字符出现次数都是一 
+		while(count[s[right]] > 1){
+			count[s[left]]--;//因为踢出去了  所以出现的次数减少 
+			left++;
+		}
+		
+		int currentlength = right - left +1;//当前窗口长度 
+		
+		if(currentlength > maxlength){
+			maxlength = currentlength;
+			ll = left;
+		}
+		
+	}
+	
+	
+	res = s.substr(ll, maxlength); //提取窗口 
+	cout << res << endl;
+	
+}
+```
+---
+---
+## 题目描述： 输入一个整数数组（如 1 2 3 4 5）和一个正整数 k。请找出该数组中长度为 k 的连续子数组的最大和。
+
+
+	输入： 
+	5 3
+	1 2 3 4 5
+
+	输出： 12
+---
+ __currntsum 可以定义成long long__
+
+---
+
+```c
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main(){
+	
+	int n, k;
+	cin >> n >> k;
+	vector<int> vec(n);
+	
+	for(int i = 0; i < n; i++){
+		cin >> vec[i];//定义了vector大小之后的读入方式 
+	}
+	
+	int currentsum = 0;
+	
+	//记录第一个窗口的和 
+	for(int i = 0; i < k; i++){
+		currentsum += vec[i];
+	} 
+	int  maxsum = currentsum; 
+	
+	//计算剩余窗口的和    i从k开始 
+	for(int i = k; i < n; i++){
+		currentsum = currentsum + vec[i] - vec[i-k];//更新窗口的和 加进去vec[i]   踢出去Vvec[i-k]（也就是原来窗口的最左边）
+		
+		if(currentsum > maxsum){//更新窗口和 
+			maxsum = currentsum;
+		} 
+	}
+	
+	cout << maxsum << endl;
+}
+
+```
+---
+---
+## 给定一个正整数数组和一个目标值 target。找出该数组中满足其和 ≥ target 的长度最小的连续子数组，并输出其长度。如果不存在，输出 0。
+
+
+输入：
+6 7
+2 3 1 2 4 3
+
+输出： 2
+```c
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main(){
+	
+	int n, target;
+	cin >> n >> target;
+	vector<int> vec(n);
+	
+	for(int i = 0; i < n; i++){
+		cin >> vec[i];
+	}
+	
+	int left = 0;
+	int minlength = n+1;//把最小长度一开始设置成一个不可能的大数
+	int sum = 0;
+	
+	for(int right = 0; right < n; right++){
+		sum += vec[right];
+		
+		while(sum >= target){//这里是while  只要sum>=target 窗口就一直可以缩小 即left就可以一直尝试++ 
+			int currentlength = right - left + 1;//更新当前窗口长度 
+			if(currentlength < minlength){//更新 
+				minlength = currentlength;
+			}
+			
+			//left往右移 
+			sum = sum - vec[left];
+			left++;
+		}
+	} 
+	
+	if(minlength == n+1){
+		cout << "NO" << endl;
+	}
+	else{
+		cout << minlength << endl;
+	}
+	 
+	 
+}
+
+```
+---
+---
+## 给定一个字符串，求出至多包含 2 个不同字符的最长连续子串的长度。
+```c
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main(){
+	
+	string s;
+	getline(cin, s);
+	int left = 0;
+	int maxlength = 0;
+	int type = 0;//记录窗口内出现的字符的种类数 
+	int count[256] = {0};//记录窗口内的字符出现的次数    如果窗口内某个字符出现次数减少为0  说明type也可以-- 
+	
+	for(int right = 0; right < s.length(); right++){
+		count[s[right]]++;//窗口内出现的字符 对应的出现次数++ 
+		if(count[s[right]] == 1) type++;//如果新加进来的字符 的 出现次数是1 说明是第一次出现 窗口内 的字符种类数++
+		
+		//只有违规了才缩窗 
+		while(type > 2){
+		
+			count[s[left]]--;//缩小窗口  
+			if(count[s[left]] == 0) type--;//窗口内没有这个字符了 type-- 
+			left++;
+		} 	
+		
+		
+		//清算本次窗口 
+		int currentlength = right - left + 1;
+		if(currentlength > maxlength) maxlength = currentlength;
+		
+	}
+	
+	cout << maxlength << endl;
+}
+```
+---
+---
+## 给你两个字符串 s1 和 s2 ，判断 s2 是否包含 s1 的排列（即 s1 的任意一种排列是 s2 的一个子串）。
+换句话说，检查 s2 中是否有与 s1 包含相同字符及其频率的子串。
+
+
+
+	输入：s1 = "ab", s2 = "eidbaooo"
+
+	输出：true （解释：s2 包含 ba，它是 ab 的排列）
+
+	输入：s1 = "ab", s2 = "eidboaoo"
+
+	输出：false
+
+思路：
+先统计s1的每个字符出现的次数 用vec保存 __这样可以直接用数组比较__
+在统计s2的第一个窗口是否满足条件  然后决定是否把窗口往右移动 
+
+```c
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+
+int main(){
+	
+	string a, b;
+	getline(cin, a);
+	getline(cin, b);
+	
+	vector<int> need(26, 0);//使用vec能直接用 ==  定义方式（大小， 初始值） 
+	vector<int> window(26, 0);
+	
+	for(int i = 0; i < a.length(); i++){//统计s1的每个字符出现的次数 
+		need[a[i] - 'a']++;
+	}
+	
+	int n = a.length();
+	
+	for(int i = 0; i < n; i++){//先算第一个窗口 
+		window[b[i] - 'a']++;
+	}
+	
+	if(window == need){//第一个窗口符合条件  window == need
+		cout << "true" << endl;	
+	}
+	else{
+		
+		for(int right = n; right < b.length(); right++){
+			window[b[right] - 'a']++;
+			window[b[right-n] - 'a'] --;//移动窗口  踢出去最左边的元素  左边界用right-n就能表示 
+			
+			if(window == need){
+				cout << "true" << endl;
+				break;
+			}
+			
+		}
+		cout << "NO" << endl;
+	}
+	
+}
+```
+---
+---
+## 给你一个字符串 s 和一个整数 k 。你可以选择字符串中的任一字符，并将其更改为任何其他大写英文字符。问在最多执行 k 次替换后，包含相同字母的最长子串的长度是多少？
+
+
+
+	输入：s = "ABAB", k = 2
+
+	输出：4 （解释：用两个 A 替换两个 B 得到 AAAA）
+
+	输入：s = "AABABBA", k = 1
+
+	输出：4 （解释：将中间的 B 替换为 A 得到 AABAA）
+
+思路：
+统计窗口内 出现次数最多的字符出现的次数a
+只要 __窗口长度-a <= k__ 就可以
+然后记录最长的长度
+```c
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main(){
+	string s;
+	getline(cin, s);
+	int k;
+	cin >> k;
+	
+	vector<int> vec(26, 0);//记录窗口内的字符出现的次数 
+	int left = 0;
+	int result = 0;//最长长度 
+	int maxcount = 0;//窗口内 出现次数最多的字符 出现的次数 
+	
+	for(int right = 0; right < s.length(); right++){
+		int idx = s[right]-'A';//扩大窗口  
+		vec[idx]++;//更新新进来的字符的出现次数 
+		maxcount = max(maxcount, vec[idx]);//更新 maxcount 
+		
+		while((right-left+1) - maxcount > k){//缩小窗口  直到满足条件 ：长度- maxcount <= k     窗口长度： right-left+1 
+			vec[s[left]-'A']--;
+			left++;
+		}
+		
+		result = max(result, right-left+1);//更新结果 
+	}
+	
+	cout << result << endl;
+	
+}
+```
+---
