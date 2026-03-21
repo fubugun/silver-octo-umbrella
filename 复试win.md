@@ -720,6 +720,102 @@ int main(){
 ```
 ---
 ---
+## 输入一个缩写字符串（如 a3b2c1）和一个目标长字符串。判断缩写是否合法。
+	规则：数字表示前面的字符重复次数。
+	注意：数字可能不止一位（如 a12），且可能存在嵌套如 a2(bc)3，即 abcbcbcabcbcbc。
+
+解压字符串
+如果是数字 读取完整数字后 对数字所对应的字符串进行复试
+如果是字符 直接 __变成字符串__ 之后入栈
+如果是（  直接入栈
+如果是 ）  说明有嵌套  弹出字符 直到遇到（  这几个字符拼成一个新字符 再重新压入栈
+而且要 __注意顺序  因为栈的性质  所以是s = stk.top+ s 而不是s+=stk.top__
+最后再依次弹出栈中元素  进行拼接
+并且这里也要注意 __栈的性质__
+
+注意：
+是把每段字符串处理好放入栈中 最后再进行拼接
+而不是每次都直接处理后 直接拼接
+这是因为 __存在嵌套__ 
+```c
+#include <iostream>
+#include <string>
+#include <stack>
+using namespace std;
+
+int fnum(char c){
+	if(c >= '0' && c <= '9') return 1;
+	else return 0;
+}
+
+int fchar(char c){
+	if((c <= 'z' && c >= 'a') || (c <= 'Z' && c >= 'A')) return 1;
+	else return 0;
+}
+
+//处理 字符串+数字   把字符串复制num次 
+string fcopy(string str, int num){
+	
+	string result = "";
+	for(int i = 0; i < num; i++){
+		result += str;
+	}
+	return result;
+}
+
+int main(){
+	
+	string s;
+	getline(cin, s);
+	
+	stack<string> strstk;
+	
+	for(int i = 0; i < s.length(); i++){
+		
+		if(fnum(s[i])){//碰到数字  就处理栈内的字符串  进行复制 
+			int num = 0;
+			while(i < s.length() && fnum(s[i])){
+				num = num*10 + s[i]-'0';
+				i++;
+			}
+			i--;
+			
+			string temp = fcopy(strstk.top(), num);
+			strstk.pop();//弹出原来的压缩后的字符串 
+			strstk.push(temp);//放入处理好的解压后的字符串 
+			
+		}
+		else if(fchar(s[i])){
+			string temp = "";//把字符变成 字符串 
+			temp += s[i];
+			strstk.push(temp);
+		}
+		else if(s[i] == '('){
+			strstk.push("(");//字符 变成 字符串 再压入 
+		}
+		else if(s[i] == ')'){
+			string temp = "";
+			while(strstk.top() != "("){
+				temp = strstk.top() + temp;//注意拼接顺序 
+				strstk.pop();
+			}
+			strstk.pop();
+			strstk.push(temp);//把括号内内字符串拼接好之后  再存入栈中 
+		}
+	}
+	
+	string res = "";
+	
+	while(!strstk.empty()){
+		res =strstk.top() + res;//注意拼接顺序 
+		strstk.pop();
+	}
+	
+	cout << res << endl;
+}
+```
+---
+---
 ## 判断括号序列是否合法,输入只包含 ()[]{} 的字符串，判断括号是否匹配。
 
 
@@ -2673,6 +2769,42 @@ int main(){
 	}
 	
 	cout<<endl;
+	
+}
+```
+---
+---
+## 定义一种“阶乘进制”：第一位权值为 $1!$，第二位为 $2!$，第 $n$ 位为 $n!$。输入一个十进制大整数，将其转换为该阶乘进制表示并输出。
+
+	权值是 n!  
+	但“进位规则”是 % n
+```c
+#include <iostream>
+#include <string>
+#include <stack>
+using namespace std;
+
+int main(){
+	
+	long long num;
+	long long res;
+	stack<int> stk;
+	
+	cin >> num;
+	
+	int n = 1;
+	
+	while(num > 0){
+		long long temp = num % n;//权值是 n!  但“进位规则”是 % n
+		stk.push(temp);
+		num = num/n;
+		n++;
+	} 
+	
+	while(!stk.empty()){
+		cout << stk.top();
+		stk.pop();
+	}
 	
 }
 ```
@@ -4776,11 +4908,11 @@ int main(){
 ## 给定一个正整数数组和一个目标值 target。找出该数组中满足其和 ≥ target 的长度最小的连续子数组，并输出其长度。如果不存在，输出 0。
 
 
-输入：
-6 7
-2 3 1 2 4 3
+	输入：
+	6 7
+	2 3 1 2 4 3
 
-输出： 2
+	输出： 2
 ```c
 #include <iostream>
 #include <vector>
